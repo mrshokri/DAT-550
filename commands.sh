@@ -6,3 +6,6 @@ source myenv/bin/activate
 
 # deactivate venv
 deactivate
+
+# to install dependencies
+pip install -r requirements.txt
