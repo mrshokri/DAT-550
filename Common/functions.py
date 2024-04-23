@@ -1,9 +1,10 @@
 import torch
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
-
+from tqdm import tqdm
+from prettytable import PrettyTable
 
 # Function to evaluate the model
-def evaluate_model(model, test_loader):
+def evaluate_model(model, test_loader, tag):
     model.eval()
     all_preds = []
     all_labels = []
@@ -18,15 +19,36 @@ def evaluate_model(model, test_loader):
     precision = precision_score(all_labels, all_preds, average="macro", zero_division=0)
     recall = recall_score(all_labels, all_preds, average="macro", zero_division=0)
     f1 = f1_score(all_labels, all_preds, average="macro", zero_division=0)
-    
-    print(f"\nEvaluations:")
-    print(
-        f"Accuracy: {accuracy * 100:.2f}%\nF1 Score: {f1 * 100:.2f}%\nPrecision: {precision * 100:.2f}%\nRecall: {recall * 100:.2f}%\n\n"
-    )
 
-# Function to train the model
+    # Create a table
+    table = PrettyTable()
+    table.field_names = ["Metric", "Score"]
+    # Adding rows with correct percentage formatting
+    table.add_row(["Accuracy", f"{accuracy * 100:.2f}%"])
+    table.add_row(["F1 Score", f"{f1 * 100:.2f}%"])
+    table.add_row(["Precision", f"{precision * 100:.2f}%"])
+    table.add_row(["Recall", f"{recall * 100:.2f}%"])
+    print(table)
+
+    result = {
+        "accuracy": accuracy,
+        "precision": precision,
+        "recall": recall,
+        "f1": f1,
+        "tag": tag,
+    }
+    return result
+
+
+
 def train_model(model, criterion, optimizer, train_loader, num_epochs):
-    for epoch in range(num_epochs):
+    # Customize the bar format
+    bar_format = '{desc}: {percentage:3.0f}%|{bar}|[{elapsed}{postfix}]'
+
+    # Initialize a progress bar with customized bar format
+    pbar = tqdm(range(num_epochs), desc="Training Progress", bar_format=bar_format)
+    
+    for epoch in pbar:
         model.train()
         running_loss = 0.0
         for inputs, labels in train_loader:
@@ -36,4 +58,6 @@ def train_model(model, criterion, optimizer, train_loader, num_epochs):
             loss.backward()
             optimizer.step()
             running_loss += loss.item()
-        print(f"Epoch [{epoch+1}/{num_epochs}], Loss: {running_loss}")
+
+        # Update the progress bar with custom postfix
+        pbar.set_postfix(Epoch=epoch+1, Loss=f"{running_loss:.2f}")
